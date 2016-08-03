@@ -1,0 +1,6 @@
+{
+    "require": {
+        "emarref/jwt": "^1.0",
+        "mashape/unirest-php": "^3.0"
+    }
+}
