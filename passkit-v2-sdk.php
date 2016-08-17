@@ -118,8 +118,8 @@ class PassKit {
 	 * @param string $name Name of the template
 	 * @return array with API result
 	 */
-	public function UpdateTemplateData($name) {
-		return $this->doQuery("/templates/".$name, "PUT");
+	public function UpdateTemplateData($name, $data) {
+		return $this->doQuery("templates/".$name, "PUT", $data);
 	}
 	
 	/**
@@ -139,7 +139,7 @@ class PassKit {
 	 * @return array with API result
 	 */
 	public function PushTemplateUpdate($name) {
-		return $this->doQuery("/templates/".$name, "PUT");
+		return $this->doQuery("templates/".$name, "PUT");
 	}
 	
 	/**
@@ -148,7 +148,7 @@ class PassKit {
 	 * @return array with API result
 	 */
 	public function CreatePass($data) {
-		return $this->doQuery("/passes", "POST");
+		return $this->doQuery("passes", "POST", $data);
 	}
 	
 	/**
@@ -157,7 +157,7 @@ class PassKit {
 	 * @return array with API result
 	 */
 	public function GetPassById($pid) {
-		return $this->doQuery("/passes/".$pid, "GET");
+		return $this->doQuery("passes/".$pid, "GET");
 	}
 	
 	/**
@@ -167,7 +167,7 @@ class PassKit {
 	 * @return array with API result
 	 */
 	public function GetPassByUserDefinedId($userDefinedId, $campainName) {
-		return $this->doQuery("/passes?userDefinedId=".$userDefinedId."&campaignName=".$campainName, "GET");
+		return $this->doQuery("passes?userDefinedId=".$userDefinedId."&campaignName=".$campainName, "GET");
 	}
 	
 	/**
@@ -177,7 +177,7 @@ class PassKit {
 	 * @return array with API result
 	 */
 	public function UpdatePassById($pid, $data) {
-		return $this->doQuery("/passes/".$pid, "PUT", $data);
+		return $this->doQuery("passes/".$pid, "PUT", $data);
 	}
 	
 	/**
@@ -187,7 +187,7 @@ class PassKit {
 	 * @return array with API result
 	 */
 	public function UpdatePassByUserDefinedId($userDefinedId, $campainName, $data) {
-		return $this->doQuery("/passes?userDefinedId=".$userDefinedId."&campaignName=".$campainName, "PUT");
+		return $this->doQuery("passes?userDefinedId=".$userDefinedId."&campaignName=".$campainName, "PUT");
 	}
 	
 	/**
@@ -197,7 +197,7 @@ class PassKit {
 	 * @return array with API result
 	 */
 	public function CreatePassBatch($data) {
-		return $this->doQuery("/passesBatch", "POST");
+		return $this->doQuery("passesBatch", "POST", $data);
 	}
 	
 	/**
@@ -207,25 +207,25 @@ class PassKit {
 	 * @return array with API result
 	 */
 	public function UpdatePassBatch($data) {
-		return $this->doQuery("/passesBatch", "PUT");
+		return $this->doQuery("passesBatch", "PUT", $data);
 	}
 	
 	private function doQuery($path, $type, $data = null) {
-		$url = 'https://api-pass.passkit.net/v2/'. $path;
+		$url = $this->apiUrl. $path;
 	
 		$headers = array(
 			'Accept' => 'application/json',
 			'Authorization' => 'PKAuth ' . $this->generateJwt(),
 			'Content-Type' => 'application/json',
 		);
-		
+
 		switch($type) {
 			case "POST":
-				$body = Unirest\Request\Body::json(json_encode($data));
+				$body = Unirest\Request\Body::json($data);
 				$response = Unirest\Request::post($url, $headers, $body);
 				break;
 			case "PUT":
-				$body = Unirest\Request\Body::json(json_encode($data));
+				$body = Unirest\Request\Body::json($data);
 				$response = Unirest\Request::put($url, $headers, $body);
 				break;
 			case "GET":
@@ -242,7 +242,7 @@ class PassKit {
 	}
 	
 	private function doMultipartQuery($path, $type, $data, $files) {
-		$url = 'https://api-pass.passkit.net/v2/'. $path;
+		$url = $this->apiUrl. $path;
 		
 		$headers = array(
 			'Accept' => 'application/json',
