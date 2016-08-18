@@ -37,7 +37,7 @@ class PassKit {
 	 * @return array with API result
 	 */
 	public function GetCertificateDetails($certificateId) {
-		return $this->doQuery("passbookCerts" . $certificateId, "GET");
+		return $this->doQuery("passbookCerts/".$certificateId, "GET");
 	}
 	
 	/**
@@ -211,65 +211,73 @@ class PassKit {
 	}
 	
 	private function doQuery($path, $type, $data = null) {
-		$url = $this->apiUrl. $path;
+		try {
+			$url = $this->apiUrl. $path;
 	
-		$headers = array(
-			'Accept' => 'application/json',
-			'Authorization' => 'PKAuth ' . $this->generateJwt(),
-			'Content-Type' => 'application/json',
-		);
+			$headers = array(
+				'Accept' => 'application/json',
+				'Authorization' => 'PKAuth ' . $this->generateJwt(),
+				'Content-Type' => 'application/json',
+			);
 
-		switch($type) {
-			case "POST":
-				$body = Unirest\Request\Body::json($data);
-				$response = Unirest\Request::post($url, $headers, $body);
-				break;
-			case "PUT":
-				$body = Unirest\Request\Body::json($data);
-				$response = Unirest\Request::put($url, $headers, $body);
-				break;
-			case "GET":
-				$response = Unirest\Request::get($url, $headers, $body);
-				break;
-		}
-		
-		if(!empty($response->body)) {
-			return $response->body;
-		}
-		else {
-			return null;
+			switch($type) {
+				case "POST":
+					$body = Unirest\Request\Body::json($data);
+					$response = Unirest\Request::post($url, $headers, $body);
+					break;
+				case "PUT":
+					$body = Unirest\Request\Body::json($data);
+					$response = Unirest\Request::put($url, $headers, $body);
+					break;
+				case "GET":
+					$response = Unirest\Request::get($url, $headers, $body);
+					break;
+			}
+			
+			if(!empty($response->body)) {
+				return $response->body;
+			}
+			else {
+				return null;
+			}
+		} catch (Exception $e) {
+		    echo 'Caught exception: ',  $e->getMessage(), "\n";
 		}
 	}
 	
 	private function doMultipartQuery($path, $type, $data, $files) {
-		$url = $this->apiUrl. $path;
-		
-		$headers = array(
-			'Accept' => 'application/json',
-			'Authorization' => 'PKAuth ' . $this->generateJwt(),
-		);
-		
-		$data = array(
-			"jsonBody" => json_encode($data)
-		);
-		
-		$body = Unirest\Request\Body::multipart($data, $files);
-		
-		switch($type) {
-			case "POST":
-				$response = Unirest\Request::post($url, $headers, $body);
-				break;
-			case "PUT":
-				$response = Unirest\Request::put($url, $headers, $body);
-				break;
-		}
-		
-		
-		if(!empty($response->body)) {
-			return $response->body;
-		}
-		else {
-			return null;
+		try {
+			$url = $this->apiUrl. $path;
+			
+			$headers = array(
+				'Accept' => 'application/json',
+				'Authorization' => 'PKAuth ' . $this->generateJwt(),
+			);
+			
+			$data = array(
+				"jsonBody" => json_encode($data)
+			);
+			
+			$body = Unirest\Request\Body::multipart($data, $files);
+			
+			switch($type) {
+				case "POST":
+					$response = Unirest\Request::post($url, $headers, $body);
+					break;
+				case "PUT":
+					$response = Unirest\Request::put($url, $headers, $body);
+					break;
+			}
+			
+			
+			if(!empty($response->body)) {
+				return $response->body;
+			}
+			else {
+				return null;
+			}
+		} catch (Exception $e) {
+		    echo 'Caught exception: ',  $e->getMessage(), "\n";
 		}
 	}
 	
