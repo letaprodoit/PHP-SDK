@@ -28,7 +28,7 @@ class PassKit {
 	 */
 	public function UploadCertificate($data, $certificateFilePath) {
 		$files = array("passbookCER" => $certificateFilePath);
-		return $this->doMultipartQuery("passbookCerts", "POST", $data, $files);
+		return $this->doMultipartQuery("passbookCerts", "POST", $data, $files, null);
 	}
 	
 	/**
@@ -37,7 +37,7 @@ class PassKit {
 	 * @return array with API result
 	 */
 	public function GetCertificateDetails($certificateId) {
-		return $this->doQuery("passbookCerts" . $certificateId, "GET");
+		return $this->doQuery("passbookCerts/".$certificateId, "GET");
 	}
 	
 	/**
@@ -100,7 +100,7 @@ class PassKit {
 	 * @return array with API result
 	 */
 	public function CreateTemplate($data, $imagesFilePaths) {
-		return $this->doMultipartQuery("templates", "POST", $data, $imagesFilePaths);
+		return $this->doMultipartQuery("templates", "POST", $data, $imagesFilePaths, null);
 	}
 	
 	/**
@@ -128,8 +128,11 @@ class PassKit {
 	 * @param string $name Name of the template
 	 * @return array with API result
 	 */
-	public function UpdateTemplateDataImages($name, $data, $imagesFilePaths) {
-		return $this->doMultipartQuery("templates/".$name, "PUT", $data, $imagesFilePaths);
+	public function UpdateTemplateDataImages($name, $data, $updateImageList, $deleteImageList) {
+		$updateImageList = ($updateImageList == null) ? array() : $updateImageList ;
+		$deleteImageList = ($deleteImageList == null) ? array() : $deleteImageList ;
+		$ImageList = array_merge(array_keys($updateImageList), $deleteImageList);
+		return $this->doMultipartQuery("templates/".$name, "PUT", $data, $updateImageList, $ImageList);
 	}
 	
 	/**
@@ -211,68 +214,86 @@ class PassKit {
 	}
 	
 	private function doQuery($path, $type, $data = null) {
-		$url = $this->apiUrl. $path;
+		try {
+			$url = $this->apiUrl. $path;
 	
-		$headers = array(
-			'Accept' => 'application/json',
-			'Authorization' => 'PKAuth ' . $this->generateJwt(),
-			'Content-Type' => 'application/json',
-		);
+			$headers = array(
+				'Accept' => 'application/json',
+				'Authorization' => 'PKAuth ' . $this->generateJwt(),
+				'Content-Type' => 'application/json',
+			);
 
-		switch($type) {
-			case "POST":
-				$body = Unirest\Request\Body::json($data);
-				$response = Unirest\Request::post($url, $headers, $body);
-				break;
-			case "PUT":
-				$body = Unirest\Request\Body::json($data);
-				$response = Unirest\Request::put($url, $headers, $body);
-				break;
-			case "GET":
-				$response = Unirest\Request::get($url, $headers, $body);
-				break;
-		}
-		
-		if(!empty($response->body)) {
-			return $response->body;
-		}
-		else {
-			return null;
-		}
-	}
-	
-	private function doMultipartQuery($path, $type, $data, $files) {
-		$url = $this->apiUrl. $path;
-		
-		$headers = array(
-			'Accept' => 'application/json',
-			'Authorization' => 'PKAuth ' . $this->generateJwt(),
-		);
-		
-		$data = array(
-			"jsonBody" => json_encode($data)
-		);
-		
-		$body = Unirest\Request\Body::multipart($data, $files);
-		
-		switch($type) {
-			case "POST":
-				$response = Unirest\Request::post($url, $headers, $body);
-				break;
-			case "PUT":
-				$response = Unirest\Request::put($url, $headers, $body);
-				break;
-		}
-		
-		
-		if(!empty($response->body)) {
-			return $response->body;
-		}
-		else {
-			return null;
+			switch($type) {
+				case "POST":
+					$body = Unirest\Request\Body::json($data);
+					$response = Unirest\Request::post($url, $headers, $body);
+					break;
+				case "PUT":
+					$body = Unirest\Request\Body::json($data);
+					$response = Unirest\Request::put($url, $headers, $body);
+					break;
+				case "GET":
+					$response = Unirest\Request::get($url, $headers, $body);
+					break;
+			}
+			
+			if(!empty($response->body)) {
+				return $response->body;
+			}
+			else {
+				return null;
+			}
+		} catch (Exception $e) {
+		    echo 'Caught exception: ',  $e->getMessage(), "\n";
 		}
 	}
 	
+	private function doMultipartQuery($path, $type, $data, $files, $updateImageList) {
+		try {
+			$url = $this->apiUrl. $path;
+			
+			$headers = array(
+				'Accept' => 'application/json',
+				'Authorization' => 'PKAuth ' . $this->generateJwt(),
+			);
+			if ($updateImageList == null){
+				$data = array(
+					"jsonBody" => json_encode($data)
+				);
+			} else {
+				$data = array(
+					"jsonBody" => json_encode($data),
+					"updatedMultipart" => '["'.implode('","', $updateImageList).'"]'
+				);
+			}
+			
+			if ($files == null) {
+				$body = Unirest\Request\Body::multipart($data);
+			} else {
+				$body = Unirest\Request\Body::multipart($data, $files);
+			}
+			
+			switch($type) {
+				case "POST":
+					$response = Unirest\Request::post($url, $headers, $body);
+					break;
+				case "PUT":
+					$response = Unirest\Request::put($url, $headers, $body);
+					break;
+			}
+			
+			
+			if(!empty($response->body)) {
+				return $response->body;
+			}
+			else {
+				return null;
+			}
+		} catch (Exception $e) {
+		    echo 'Caught exception: ',  $e->getMessage(), "\n";
+		}
+	}
+
 	private function generateJwt() {
 		$token = new Emarref\Jwt\Token();
 		$token->addHeader(new Emarref\Jwt\HeaderParameter\Custom("typ", "JWT"));
