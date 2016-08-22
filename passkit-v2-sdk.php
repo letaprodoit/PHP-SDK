@@ -28,7 +28,7 @@ class PassKit {
 	 */
 	public function UploadCertificate($data, $certificateFilePath) {
 		$files = array("passbookCER" => $certificateFilePath);
-		return $this->doMultipartQuery("passbookCerts", "POST", $data, $files);
+		return $this->doMultipartQuery("passbookCerts", "POST", $data, $files, null);
 	}
 	
 	/**
@@ -100,7 +100,7 @@ class PassKit {
 	 * @return array with API result
 	 */
 	public function CreateTemplate($data, $imagesFilePaths) {
-		return $this->doMultipartQuery("templates", "POST", $data, $imagesFilePaths);
+		return $this->doMultipartQuery("templates", "POST", $data, $imagesFilePaths, null);
 	}
 	
 	/**
@@ -128,8 +128,8 @@ class PassKit {
 	 * @param string $name Name of the template
 	 * @return array with API result
 	 */
-	public function UpdateTemplateDataImages($name, $data, $imagesFilePaths) {
-		return $this->doMultipartQuery("templates/".$name, "PUT", $data, $imagesFilePaths);
+	public function UpdateTemplateDataImages($name, $data, $imagesFilePaths, $updateImageList) {
+		return $this->doMultipartQuery("templates/".$name, "PUT", $data, $imagesFilePaths, $updateImageList);
 	}
 	
 	/**
@@ -245,7 +245,7 @@ class PassKit {
 		}
 	}
 	
-	private function doMultipartQuery($path, $type, $data, $files) {
+	private function doMultipartQuery($path, $type, $data, $files, $updateImageList) {
 		try {
 			$url = $this->apiUrl. $path;
 			
@@ -253,11 +253,17 @@ class PassKit {
 				'Accept' => 'application/json',
 				'Authorization' => 'PKAuth ' . $this->generateJwt(),
 			);
-			
-			$data = array(
-				"jsonBody" => json_encode($data)
-			);
-			
+			if ($updateImageList == null){
+				$data = array(
+					"jsonBody" => json_encode($data)
+				);
+			} else {
+				$data = array(
+					"jsonBody" => json_encode($data),
+					"updatedMultipart" => '["'.implode('","', $updateImageList).'"]'
+				);
+			}
+						
 			$body = Unirest\Request\Body::multipart($data, $files);
 			
 			switch($type) {
@@ -280,7 +286,7 @@ class PassKit {
 		    echo 'Caught exception: ',  $e->getMessage(), "\n";
 		}
 	}
-	
+
 	private function generateJwt() {
 		$token = new Emarref\Jwt\Token();
 		$token->addHeader(new Emarref\Jwt\HeaderParameter\Custom("typ", "JWT"));
