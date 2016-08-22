@@ -128,8 +128,11 @@ class PassKit {
 	 * @param string $name Name of the template
 	 * @return array with API result
 	 */
-	public function UpdateTemplateDataImages($name, $data, $imagesFilePaths, $updateImageList) {
-		return $this->doMultipartQuery("templates/".$name, "PUT", $data, $imagesFilePaths, $updateImageList);
+	public function UpdateTemplateDataImages($name, $data, $updateImageList, $deleteImageList) {
+		$updateImageList = ($updateImageList == null) ? array() : $updateImageList ;
+		$deleteImageList = ($deleteImageList == null) ? array() : $deleteImageList ;
+		$ImageList = array_merge(array_keys($updateImageList), $deleteImageList);
+		return $this->doMultipartQuery("templates/".$name, "PUT", $data, $updateImageList, $ImageList);
 	}
 	
 	/**
@@ -263,8 +266,12 @@ class PassKit {
 					"updatedMultipart" => '["'.implode('","', $updateImageList).'"]'
 				);
 			}
-						
-			$body = Unirest\Request\Body::multipart($data, $files);
+			
+			if ($files == null) {
+				$body = Unirest\Request\Body::multipart($data);
+			} else {
+				$body = Unirest\Request\Body::multipart($data, $files);
+			}
 			
 			switch($type) {
 				case "POST":
