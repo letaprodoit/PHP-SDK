@@ -190,7 +190,7 @@ class PassKit {
 	 * @return array with API result
 	 */
 	public function UpdatePassByUserDefinedId($userDefinedId, $campainName, $data) {
-		return $this->doQuery("passes?userDefinedId=".$userDefinedId."&campaignName=".$campainName, "PUT");
+		return $this->doQuery("passes?userDefinedId=".$userDefinedId."&campaignName=".$campainName, "PUT", $data);
 	}
 	
 	/**
